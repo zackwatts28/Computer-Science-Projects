@@ -1,0 +1,179 @@
+		program Project1
+		!Program to find the best angle of attack for F-117A Nighthawk
+		!Written by Zack Watts
+		!2/12/19
+		!CSC 434- Ferner
+	
+		
+		!global variables
+		real :: numAltitude = 0
+		real :: angle = 0
+		real :: knots = 400
+		double precision :: CL = 0
+		!Declaration of arrays
+		real :: DensityInfo(21)
+		integer :: AltitudeInfo(21)
+		integer :: LiftInfo(21,21)
+		double precision :: d = 0
+		integer pt
+		integer token
+		integer :: pitchAngle = 0
+		integer temp1
+		integer temp2
+		
+		!Array for all densities from biggest to smallest
+		DensityInfo(1) = .002377
+		DensityInfo(2) = .002308
+		DensityInfo(3) = .002241
+		DensityInfo(4) = .002175
+		DensityInfo(5) = .002111
+		DensityInfo(6) = .002048
+		DensityInfo(7) = .001987
+		DensityInfo(8) = .001927
+		DensityInfo(9) = .001868
+		DensityInfo(10) = .001811
+		DensityInfo(11) = .001755
+		DensityInfo(12) = .001496
+		DensityInfo(13) = .001266
+		DensityInfo(14) = .001065
+		DensityInfo(15) = .000889
+		DensityInfo(16) = .000737
+		DensityInfo(17) = .000706
+		DensityInfo(18) = .000585
+		DensityInfo(19) = .000460
+		DensityInfo(20) = .000362
+		DensityInfo(21) = .000285		
+		
+		!altitude array
+		AltitudeInfo(1) = 0
+		AltitudeInfo(2) = 1000
+		AltitudeInfo(3) = 2000
+		AltitudeInfo(4) = 3000
+		AltitudeInfo(5) = 4000
+		AltitudeInfo(6) = 5000
+		AltitudeInfo(7) = 6000
+		AltitudeInfo(8) = 7000
+		AltitudeInfo(9) = 8000
+		AltitudeInfo(10) = 9000
+		AltitudeInfo(11) = 10000
+		AltitudeInfo(12) = 15000
+		AltitudeInfo(13) = 20000
+		AltitudeInfo(14) = 25000
+		AltitudeInfo(15) = 30000
+		AltitudeInfo(16) = 35000
+		AltitudeInfo(17) = 36089
+		AltitudeInfo(18) = 40000
+		AltitudeInfo(19) = 45000
+		AltitudeInfo(20) = 50000
+		AltitudeInfo(21) = 55000 
+		
+		!If you want to convert a certain number of knots to Feet per second
+		!you can change the value of knots to whatever
+		
+		!call KnotsToFPS(knots)
+		
+		
+		!Prints out the header for the output
+		write(*,*) '--Altitude--', '	',' Lift(Angle/Pitch)'
+		write (*,*) '0','	','1','		','2','		', '3','	','4','		','5'
+		!do loop to 21 for every value in the give altitude and density tables
+		do 20, i = 1,21
+			!resets the angle to 0 because the CoeffLift function alters it
+			angle =0
+			do 10, j = 1,21
+				! write(*,*) 'Altitude-', AltitudeInfo(i)
+				! write(*,*) 'angle-',angle 
+				
+				!Finds the Coefficient of lift given a 'real' angle
+				!result is stored in the variable angle
+				call CoeffLift(angle)
+				
+				!gets the current density info based on i
+				d = DensityInfo(i)
+				CL = angle
+				
+				!sends the current air density and current Coefficient of lift to find the 
+				!actual life
+				call totalLift(d,CL)
+				
+				!Forms the two dimensional array LiftInfo that stores the table of data
+				LiftInfo(i,j) = CL
+				!write(*,*) 'Lift-', LiftInfo(i,j),'   correct-', CL
+				!resets the angle variable
+				if(j .GT. 1) angle = j
+				if(j .LE. 1) angle = j
+10			continue
+	
+20		CONTINUE
+		
+		!prints out the table of data that is stored in totalLife
+		!exlplicit do loop
+		do 30, x = 1,21
+			write(*,*)
+												!Implicit do loop to search through LiftInfo
+			write(*,*) "--",AltitudeInfo(x),'--',(LiftInfo(x,y),y = 1,21)
+
+30		CONTINUE
+		
+		write(*,*)
+		!Gets the altitude from the user and stores it as a real in numAltitude
+		write(*,*) "Enter the altitude (feet) for the Nighthawk"
+		read(*,*) numAltitude
+		
+		!Computes the optimal angle of attack for the aircraft
+		do 60, z = 1,21			
+			if (numAltitude .NE. AltitudeInfo(z)) GO TO 60
+			Pt = z
+			do 70, a = 1,21
+				!This gets the first optimal angle that keeps the plane in the air
+				!Does not print out all optimal angles, just the first one
+				if (52500 .LT. LiftInfo(pt,a)) x=1
+				if (x .EQ. 1) write(*,*) 'The required pitch angle to maintain level flight at ',numAltitude,' ft is ',  a -1, ' degrees'
+				if (x .EQ. 1) read(*,*)
+				if (x .EQ. 1) stop 
+				
+				! temp2 = temp1
+				! if (pitchAngle .LT. x) 
+				! pitchAngle = temp1
+				
+70			continue
+			
+60		continue 
+		
+		read(*,*)
+		
+		end program Project1
+		
+		!Parameters- real angle
+		!returns- real angle
+		!returns the coefficient of lift and stores it in the variable angle
+		subroutine CoeffLift(angle)
+		implicit none
+		real angle
+		
+		if (angle .LT. 16) angle = 0.080625*angle + .16
+		if (angle .GE. 16) angle = -.009874372*angle - 1.974673
+		! write(*,*) CL
+		! read(*,*)		
+		end subroutine CoeffLift
+		
+		!Parameters- double precision d and CL
+		!returns - CL
+		!Takes in air density and the coefficient of lift and returns the total lift calculation
+		subroutine totalLift(d,CL)
+			double precision d
+			double precision CL
+		
+			! write(*,*) d
+			! write(*,*) CL
+			CL = ((0.5)*d*(675.123943 * 675.123943)*1140* CL)
+			
+		end subroutine totalLift
+		
+		!parameters- int knots
+		!returns - knots
+		!converts knots to Feet per second
+		subroutine KnotsToFPS(knots)
+			real knots 
+			knots = knots * 1.6878099
+		end subroutine KnotsToFPS
